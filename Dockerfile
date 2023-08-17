@@ -1,11 +1,11 @@
-FROM golang:1.20.5 as builder
+FROM golang:1.20.7 as builder
 
 WORKDIR /go/src/github.com/sstarcher/helm-exporter
 COPY . /go/src/github.com/sstarcher/helm-exporter
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -o /go/bin/helm-exporter /go/src/github.com/sstarcher/helm-exporter/main.go
 
-FROM alpine:3
+FROM alpine:3.18.3
 RUN apk --update add ca-certificates
 RUN apk update && apk upgrade -U libssl3
 RUN apk update && apk upgrade -U libcrypto3
