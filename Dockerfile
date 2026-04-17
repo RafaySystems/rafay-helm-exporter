@@ -7,7 +7,7 @@ RUN go mod download
 ARG TARGETARCH
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -o /go/bin/helm-exporter /go/src/github.com/sstarcher/helm-exporter/main.go
 
-FROM alpine:3.22
+FROM alpine:3.23
 RUN apk --update add ca-certificates
 RUN apk update && apk upgrade openssl zlib busybox
 RUN addgroup -S helm-exporter && adduser -S -G helm-exporter helm-exporter
