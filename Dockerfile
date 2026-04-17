@@ -9,7 +9,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -o /go/bin/helm-expor
 
 FROM alpine:3.22
 RUN apk --update add ca-certificates
-RUN apk update && apk upgrade openssl zlib
+RUN apk update && apk upgrade openssl zlib busybox
 RUN addgroup -S helm-exporter && adduser -S -G helm-exporter helm-exporter
 USER helm-exporter
 COPY --from=builder /go/bin/helm-exporter /usr/local/bin/helm-exporter
