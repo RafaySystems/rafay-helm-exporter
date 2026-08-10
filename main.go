@@ -62,7 +62,7 @@ var (
 
 	statusInMetric = flag.Bool("status-in-metric", false, "Adds the status to the metric as a label. Defaults to false")
 
-	verbose = flag.Bool("verbose", false, "Enables debug logging. Defaults to false")
+	logLevel = flag.String("log-level", "error", "Sets log level. Defaults to Error")
 
 	statusCodeMap = map[string]float64{
 		"unknown":          0,
@@ -155,6 +155,8 @@ func runStats(config config.Config, info *prometheus.GaugeVec, timestamp *promet
 
 	for _, client := range clients.Items() {
 		list := action.NewList(client.(*action.Configuration))
+		list.All = true
+		list.SetStateMask()
 		items, err := list.Run()
 		if err != nil {
 			log.Warnf("got error while listing %v", err)
@@ -334,9 +336,11 @@ func main() {
 	flagenv.Parse()
 	flag.Parse()
 
-	if *verbose == true {
-		logrus.SetLevel(logrus.DebugLevel)
+	logrusLevel, err := logrus.ParseLevel(*logLevel)
+	if err != nil {
+		log.Fatalf("Wrong log level provided: %s", err)
 	}
+	logrus.SetLevel(logrusLevel)
 
 	config := config.New(*configFile)
 	if *fetchLatest {
@@ -365,6 +369,16 @@ func main() {
 	}
 
 	if runIntervalDuration != 0 {
+		// wait for the clients to be found, before the initial start of collecting metrics
+		var previousClientsCount int
+		for {
+			currentClientsCount := clients.Count()
+			if previousClientsCount == currentClientsCount && currentClientsCount > 0 {
+				break
+			}
+			previousClientsCount = currentClientsCount
+			time.Sleep(5 * time.Second)
+		}
 		go runStatsPeriodically(runIntervalDuration, config)
 	} else {
 		info, timestamp, outdated := configureMetrics()
